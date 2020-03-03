@@ -1,10 +1,8 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 public class SetFinder {
@@ -79,13 +77,14 @@ public class SetFinder {
                             desiredSkillsAfterChest.remove(skill);
                         }
                     }
-                    List<Equipment> equipmentList = new ArrayList<>();
-                    equipmentList.add(head);
-                    equipmentList.add(chest);
-                    if(finderCache.cacheHit(Part.chest, equipmentList, desiredSkillsAfterChest) != null){
+                    List<Equipment> chestEquipmentList = new ArrayList<>();
+                    chestEquipmentList.add(head);
+                    chestEquipmentList.add(chest);
+                    if(finderCache.checkCache(Part.chest, chestEquipmentList, desiredSkillsAfterChest) != null){
                         System.out.println("cache hit chest");
                         continue;
                     }
+                    boolean successAfterChest = false;
 
                     List<Equipment> arms = new ArrayList<>();
                     for(String skill : desiredSkillsAfterChest.keySet()){
@@ -106,14 +105,15 @@ public class SetFinder {
                                 desiredSkillsAfterArm.remove(skill);
                             }
                         }
-                        equipmentList = new ArrayList<>();
-                        equipmentList.add(head);
-                        equipmentList.add(chest);
-                        equipmentList.add(arm);
-                        if(finderCache.cacheHit(Part.arms, equipmentList, desiredSkillsAfterArm) != null){
+                        List<Equipment> armEquipmentList = new ArrayList<>();
+                        armEquipmentList.add(head);
+                        armEquipmentList.add(chest);
+                        armEquipmentList.add(arm);
+                        if(finderCache.checkCache(Part.arms, armEquipmentList, desiredSkillsAfterArm) != null){
                             System.out.println("cache hit arms");
                             continue;
                         }
+                        boolean successAfterArms = false;
 
                         List<Equipment> waists = new ArrayList<>();
                         for(String skill : desiredSkillsAfterArm.keySet()){
@@ -134,15 +134,16 @@ public class SetFinder {
                                     desiredSkillsAfterWaist.remove(skill);
                                 }
                             }
-                            equipmentList = new ArrayList<>();
-                            equipmentList.add(head);
-                            equipmentList.add(chest);
-                            equipmentList.add(arm);
-                            equipmentList.add(waist);
-                            if(finderCache.cacheHit(Part.waist, equipmentList, desiredSkillsAfterWaist) != null){
+                            List<Equipment> waistEquipmentList = new ArrayList<>();
+                            waistEquipmentList.add(head);
+                            waistEquipmentList.add(chest);
+                            waistEquipmentList.add(arm);
+                            waistEquipmentList.add(waist);
+                            if(finderCache.checkCache(Part.waist, waistEquipmentList, desiredSkillsAfterWaist) != null){
                                 System.out.println("cache hit waist");
                                 continue;
                             }
+                            boolean successAfterWaist = false;
 
                             List<Equipment> legs = new ArrayList<>();
                             for(String skill : desiredSkillsAfterWaist.keySet()){
@@ -199,10 +200,22 @@ public class SetFinder {
                                 Set<HashMap<String, Integer>> waysToFill = fillSlots(remainingSkills, slotCounts);
                                 if(!waysToFill.isEmpty()) {
                                     System.out.println(charm.getName() + ", " + head.getName() + ", " +chest.getName() + ", " +arm.getName() + ", " +waist.getName() + ", " +leg.getName());
-                                    finderCache.cacheSet(charm, head, chest, arm, waist, leg, desiredSkills);
+                                    finderCache.cacheSet(head, chest, arm, waist, leg, desiredSkills);
+                                    successAfterChest = true;
+                                    successAfterArms = true;
+                                    successAfterWaist = true;
                                 }
                             }
+                            if(successAfterWaist == false){
+                                finderCache.cacheFail(Part.waist, waistEquipmentList, desiredSkillsAfterWaist);
+                            }
                         }
+                        if(successAfterArms == false){
+                            finderCache.cacheFail(Part.arms, armEquipmentList, desiredSkillsAfterArm);
+                        }
+                    }
+                    if(successAfterChest == false){
+                        finderCache.cacheFail(Part.chest, chestEquipmentList, desiredSkillsAfterChest);
                     }
                 }
             }

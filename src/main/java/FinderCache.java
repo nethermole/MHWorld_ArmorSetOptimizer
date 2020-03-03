@@ -18,16 +18,27 @@ public class FinderCache {
         cachedSetsBySkillsAndSlots = new HashMap<>();
     }
 
-    public Set<Set<Equipment>> cacheHit(Part chosenPart, List<Equipment> equipmentSoFar, HashMap<String, Integer> remainingSkills){
+    public Set<Set<Equipment>> checkCache(Part chosenPart, List<Equipment> equipmentSoFar, HashMap<String, Integer> remainingSkills){
         HashMap<String, Integer> _remainingSkills = new HashMap<>(remainingSkills);
         HashMap<Part, HashMap<String, Integer>> key = new HashMap<>();
         addSlotsToCacheMap(equipmentSoFar, _remainingSkills);
         key.put(chosenPart, _remainingSkills);
         Set<Set<Equipment>> result = cachedSetsBySkillsAndSlots.get(key);
+        if(result != null && result.isEmpty()){
+            System.out.print("no set - ");
+        }
         return result;
     }
 
-    public void cacheSet(Charm charm, Equipment head, Equipment chest, Equipment arm, Equipment waist, Equipment leg, Map<String, Integer> desiredSkills){
+    public void cacheFail(Part chosenPart, List<Equipment> equipmentSoFar, HashMap<String, Integer> remainingSkills){
+        HashMap<String, Integer> _remainingSkills = new HashMap<>(remainingSkills);
+        HashMap<Part, HashMap<String, Integer>> key = new HashMap<>();
+        addSlotsToCacheMap(equipmentSoFar, _remainingSkills);
+        key.put(chosenPart, _remainingSkills);
+        cachedSetsBySkillsAndSlots.put(key, new HashSet<>());
+    }
+
+    public void cacheSet(Equipment head, Equipment chest, Equipment arm, Equipment waist, Equipment leg, Map<String, Integer> desiredSkills){
         HashMap<String, Integer> _desiredSkills = new HashMap<>(desiredSkills);
         List<Equipment> equipmentSoFar = new ArrayList<>();
 
