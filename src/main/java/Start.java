@@ -15,13 +15,12 @@ public class Start {
         SkillRegistry skillRegistry = new SkillRegistry(parser.loadSkills());
         CharmRegistry charmRegistry = new CharmRegistry(parser.loadCharms());
         EquipmentRegistry equipmentRegistry = new EquipmentRegistry(parser.loadEquipment());
-        JewelRegistry jewelRegistry = new JewelRegistry(parser.loadJewels());
+        JewelRegistry jewelRegistry = new JewelRegistry(parser.loadJewels(), parser.loadOwnedJewels());
 
         skillRegistry.validateSkills(desiredSkills.keySet());
 
         SetFinder setFinder = new SetFinder(equipmentRegistry, charmRegistry, jewelRegistry);
         setFinder.findSet(desiredSkills);
-
     }
 
 }

@@ -1,40 +1,157 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 public class SetFinder {
 
     private final static boolean SEARCH_ALL_ARMOR = false;
-    private final static boolean ONLY_MY_JEWELS = false;
 
     EquipmentRegistry equipmentRegistry;
     CharmRegistry charmRegistry;
     JewelRegistry jewelRegistry;
+    FinderCache finderCache;
 
     public SetFinder(EquipmentRegistry equipmentRegistry, CharmRegistry charmRegistry, JewelRegistry jewelRegistry) {
         this.equipmentRegistry = equipmentRegistry;
         this.charmRegistry = charmRegistry;
         this.jewelRegistry = jewelRegistry;
+        finderCache = new FinderCache();
     }
 
     public List<ArmorSet> findSet(Map<String, Integer> desiredSkills) {
-        List<Equipment> heads = new ArrayList<>();
-        List<Equipment> chests = new ArrayList<>();
-        List<Equipment> arms = new ArrayList<>();
-        List<Equipment> waists = new ArrayList<>();
-        List<Equipment> legs = new ArrayList<>();
         List<Charm> charms = new ArrayList<>();
-
-        loadParts(desiredSkills, heads, chests, arms, waists, legs, charms);
+        for(String skill : desiredSkills.keySet()){
+            charms.addAll(charmRegistry.getCharmsBySkillName(skill));
+        }
+        charms = new ArrayList<>(new HashSet<>(charms));
 
         for (Charm charm : charms) {
+            HashMap<String, Integer> desiredSkillsAfterCharm = new HashMap<>(desiredSkills);
+            for(String skill : charm.getSkills().keySet()){
+                int amount = desiredSkillsAfterCharm.getOrDefault(skill, 0);
+                amount -= charm.getSkills().get(skill);
+                if(amount > 0) {
+                    desiredSkillsAfterCharm.put(skill, amount);
+                } else{
+                    desiredSkillsAfterCharm.remove(skill);
+                }
+            }
+            List<Equipment> heads = new ArrayList<>();
+            for(String skill : desiredSkillsAfterCharm.keySet()){
+                heads.addAll(equipmentRegistry.getEquipmentByPartAndSkill(Part.head, skill));
+            }
+            heads = new ArrayList<>(new HashSet<>(heads));
+
+
+
             for (Equipment head : heads) {
+                HashMap<String, Integer> desiredSkillsAfterHead = new HashMap<>(desiredSkillsAfterCharm);
+                for(String skill : head.getArmorSkills().keySet()){
+                    int amount = desiredSkillsAfterHead.getOrDefault(skill, 0);
+                    amount -= head.getArmorSkills().getOrDefault(skill, 0);
+                    if(amount > 0) {
+                        desiredSkillsAfterHead.put(skill, amount);
+                    } else{
+                        desiredSkillsAfterHead.remove(skill);
+                    }
+                }
+                List<Equipment> chests = new ArrayList<>();
+                for(String skill : desiredSkillsAfterHead.keySet()){
+                    chests.addAll(equipmentRegistry.getEquipmentByPartAndSkill(Part.chest, skill));
+                }
+                chests = new ArrayList<>(new HashSet<>(chests));
+
+
+
                 for (Equipment chest : chests) {
+                    HashMap<String, Integer> desiredSkillsAfterChest = new HashMap<>(desiredSkillsAfterHead);
+                    for(String skill : chest.getArmorSkills().keySet()){
+                        int amount = desiredSkillsAfterChest.getOrDefault(skill, 0);
+                        amount -= chest.getArmorSkills().getOrDefault(skill,0 );
+                        if(amount > 0) {
+                            desiredSkillsAfterChest.put(skill, amount);
+                        } else{
+                            desiredSkillsAfterChest.remove(skill);
+                        }
+                    }
+                    List<Equipment> equipmentList = new ArrayList<>();
+                    equipmentList.add(head);
+                    equipmentList.add(chest);
+                    if(finderCache.cacheHit(Part.chest, equipmentList, desiredSkillsAfterChest) != null){
+                        System.out.println("cache hit chest");
+                        continue;
+                    }
+
+                    List<Equipment> arms = new ArrayList<>();
+                    for(String skill : desiredSkillsAfterChest.keySet()){
+                        arms.addAll(equipmentRegistry.getEquipmentByPartAndSkill(Part.arms, skill));
+                    }
+                    arms = new ArrayList<>(new HashSet<>(arms));
+
+
+
                     for (Equipment arm : arms) {
+                        HashMap<String, Integer> desiredSkillsAfterArm = new HashMap<>(desiredSkillsAfterChest);
+                        for(String skill : arm.getArmorSkills().keySet()){
+                            int amount = desiredSkillsAfterArm.getOrDefault(skill, 0);
+                            amount -= arm.getArmorSkills().getOrDefault(skill, 0);
+                            if(amount > 0) {
+                                desiredSkillsAfterArm.put(skill, amount);
+                            } else{
+                                desiredSkillsAfterArm.remove(skill);
+                            }
+                        }
+                        equipmentList = new ArrayList<>();
+                        equipmentList.add(head);
+                        equipmentList.add(chest);
+                        equipmentList.add(arm);
+                        if(finderCache.cacheHit(Part.arms, equipmentList, desiredSkillsAfterArm) != null){
+                            System.out.println("cache hit arms");
+                            continue;
+                        }
+
+                        List<Equipment> waists = new ArrayList<>();
+                        for(String skill : desiredSkillsAfterArm.keySet()){
+                            waists.addAll(equipmentRegistry.getEquipmentByPartAndSkill(Part.waist, skill));
+                        }
+                        waists = new ArrayList<>(new HashSet<>(waists));
+
+
+
                         for (Equipment waist : waists) {
+                            HashMap<String, Integer> desiredSkillsAfterWaist = new HashMap<>(desiredSkillsAfterArm);
+                            for(String skill : waist.getArmorSkills().keySet()){
+                                int amount = desiredSkillsAfterWaist.getOrDefault(skill, 0);
+                                amount -= waist.getArmorSkills().getOrDefault(skill, 0);
+                                if(amount > 0) {
+                                    desiredSkillsAfterWaist.put(skill, amount);
+                                } else{
+                                    desiredSkillsAfterWaist.remove(skill);
+                                }
+                            }
+                            equipmentList = new ArrayList<>();
+                            equipmentList.add(head);
+                            equipmentList.add(chest);
+                            equipmentList.add(arm);
+                            equipmentList.add(waist);
+                            if(finderCache.cacheHit(Part.waist, equipmentList, desiredSkillsAfterWaist) != null){
+                                System.out.println("cache hit waist");
+                                continue;
+                            }
+
+                            List<Equipment> legs = new ArrayList<>();
+                            for(String skill : desiredSkillsAfterWaist.keySet()){
+                                legs.addAll(equipmentRegistry.getEquipmentByPartAndSkill(Part.legs, skill));
+                            }
+                            legs = new ArrayList<>(new HashSet<>(legs));
+
+
+
                             for (Equipment leg : legs) {
                                 List<Equipment> armorSet = new ArrayList<>();
                                 armorSet.add(head);
@@ -81,13 +198,8 @@ public class SetFinder {
 
                                 Set<HashMap<String, Integer>> waysToFill = fillSlots(remainingSkills, slotCounts);
                                 if(!waysToFill.isEmpty()) {
-                                    System.out.println(head.getName() + ", " +chest.getName() + ", " +arm.getName() + ", " +waist.getName() + ", " +leg.getName() + ", " +charm.getName());
-                                    for(HashMap<String, Integer> jewelList : waysToFill) {
-                                        for(Map.Entry<String, Integer> entry : jewelList.entrySet()){
-                                            //System.out.println(entry.getKey() + ": " + entry.getValue());
-                                        }
-                                        //System.out.println("\n");
-                                    }
+                                    System.out.println(charm.getName() + ", " + head.getName() + ", " +chest.getName() + ", " +arm.getName() + ", " +waist.getName() + ", " +leg.getName());
+                                    finderCache.cacheSet(charm, head, chest, arm, waist, leg, desiredSkills);
                                 }
                             }
                         }
@@ -120,7 +232,11 @@ public class SetFinder {
 
             //case: fill a jewel, trigger recursion
             for (String desiredSkill : desiredSkills.keySet()) {
-                for (Jewel jewel : jewelRegistry.getJewelsBySkill(desiredSkill)) {
+                List<Jewel> jewelsWithDesiredSkill = jewelRegistry.getJewelsBySkill(desiredSkill);
+                if(jewelsWithDesiredSkill == null){
+                    continue;
+                }
+                for (Jewel jewel : jewelsWithDesiredSkill) {
                     HashMap<String, Integer> recurseOnDesiredSkills = new HashMap<>(desiredSkills);
                     ArrayList<Jewel> recurseOnJewelsSoFar = new ArrayList<>(jewelsSoFar);
                     int recurseOnSlot1s = slot1s;

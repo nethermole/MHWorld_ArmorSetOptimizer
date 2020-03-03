@@ -16,6 +16,22 @@ public class Parser {
     final private static String charms_path = "source_data/charms/charm_ext.json";
     final private static String charms_base_path = "source_data/charms/charm_base.csv";
     final private static String decoration_base_path = "source_data/decorations/decoration_base.csv";
+    final private static String owned_decoration_base_path = "source_data/my_jewels.csv";
+
+    public Map<String, Integer> loadOwnedJewels() throws Exception{
+        Map<String, Integer> ownedJewels = new HashMap<>();
+        Scanner scanner = new Scanner(new File(owned_decoration_base_path));
+        while(scanner.hasNextLine()){
+            String jewelString = scanner.nextLine();
+            if(!jewelString.isEmpty()) {
+                String[] jewelArray = jewelString.split(",");
+                if(!jewelArray[1].equals("0")){
+                    ownedJewels.put(jewelArray[0], Integer.parseInt(jewelArray[1]));
+                }
+            }
+        }
+        return ownedJewels;
+    }
 
     public List<Jewel> loadJewels() throws Exception{
         Scanner scanner = new Scanner(new File(decoration_base_path));
